@@ -44,10 +44,10 @@ Template.requests.onCreated(function () {
 			if (selectedFilter !== "All Requests") {
 				switch (selectedFilter) {
 					case "Approved":
-						filter = {approved: true}
+						filter = {approved: true};
 						break;
 					case "Not Approved":
-						filter = {approved: false}
+						filter = {approved: false};
 						break;
 					case "Downloaded":
 						filter = {downloaded: true};
@@ -67,10 +67,10 @@ Template.requests.onCreated(function () {
 			if (selectedFilter !== "All Requests") {
 				switch (selectedFilter) {
 					case "Approved":
-						filter = {approved: true}
+						filter = {approved: true};
 						break;
 					case "Not Approved":
-						filter = {approved: false}
+						filter = {approved: false};
 						break;
 					case "Downloaded":
 						filter = {"status.downloaded": {$gt: 0}};
@@ -95,8 +95,16 @@ Template.requests.helpers({
 		if ((typeof this.poster_path === 'undefined') | (this.poster_path === "/")) {
 			return "poster-placeholder.png";
 		} else {
-			return "https://image.tmdb.org/t/p/w154" + this.poster_path;
+                return this.poster_path;
 		}
+
+  },
+  'link' : function () {
+    var link = 'http://tvmaze.com/shows/' + this.id + '/' + this.title;
+    return link;
+  },
+  'year' : function () {
+  	return moment(this.released).format('YYYY');
   },
   'release_date' : function () {
   	return moment(this.released).format('MMMM Do, YYYY');
@@ -119,6 +127,14 @@ Template.requests.helpers({
 			}
   	}
   	return approval;
+  },
+  'available': function () {
+	if (this.imdb) {
+		return (this.downloaded) ? true : false;
+	}
+	else {
+		return;
+	}
   },
   'requesting_user' : function () {
   	if (Meteor.user()) {
@@ -164,7 +180,7 @@ Template.requests.events({
 		Meteor.call("approveRequest", this, function(error, result) {
 			if (error || !(result)) {
 				//Alert error
-				logger.error("Error approving, please check server logs");
+				console.error("Error approving, please check server logs");
 				Bert.alert("Unable to approve " + title +", please try again!", "danger");
 			} else {
 				// Alert success
@@ -177,7 +193,7 @@ Template.requests.events({
 			Meteor.call("deleteRequest", this, function(error, result) {
 				if (error || !(result)) {
 					//Alert error
-					logger.error(error);
+					console.error(error);
 				} else {
 					// Alert success with undo option
 				}
@@ -186,7 +202,9 @@ Template.requests.events({
 	},
 	'click .issue-select' : function (event, template) {
 		var issue = event.target.text;
-		Meteor.call("addIssue", this, issue, function(error, result) {
+		var request = this;
+		request.user = Session.get("user");
+		Meteor.call("addIssue", request, issue, function(error, result) {
 			if (error || !(result)) {
 				//Alert error
 				Bert.alert("Error adding an issue, or it already exists. Please try again!", "danger");
@@ -200,7 +218,7 @@ Template.requests.events({
 		Meteor.call("clearIssues", this, function (error, result) {
 			if (error || !(result)) {
 				//Alert error
-				logger.error(error);
+				console.error(error);
 				Bert.alert("Error clearing issues, please try again!", "danger");
 			} else {
 				// Alert success
@@ -245,6 +263,28 @@ Template.requests.events({
 	},
 	'click .go-to-top': function () {
 		$('body').animate({ scrollTop: 0 }, "slow")
+	},
+	'click .mark-available': function (event, template) {
+		var movie = this;
+		Meteor.call('markAvailability', movie, true, function(error, res) {
+
+			if (error) {
+				console.error(error);
+				Bert.alert("Error marking as available, please try again!", "danger");
+			}
+			Bert.alert(movie.title + " marked as available!", "success");
+		})
+	},
+	'click .mark-unavailable': function (event, template) {
+		var movie = this;
+		Meteor.call('markAvailability', movie, false, function(error, res) {
+
+			if (error) {
+				console.error(error);
+				Bert.alert("Error marking as unavailable, please try again!", "danger");
+			}
+			Bert.alert(movie.title + " marked as unavailable!", "success");
+		})
 	}
 });
 
@@ -254,4 +294,4 @@ var scroll = function () {
 			$('.load-more').trigger('click');
 		}
 	});
-}
+};

@@ -1,7 +1,7 @@
 Meteor.methods({
 	"requestMovie": function(request) {
 		check(request, Object);
-		var poster = request.poster_path || "/";
+		var poster = "https://image.tmdb.org/t/p/w154" + request.poster_path || "/";
 		var settings = Settings.find().fetch()[0];
 
 
@@ -31,7 +31,7 @@ Meteor.methods({
 		if (settings.couchPotatoENABLED) {
 			try {
 				var checkCP = CouchPotato.mediaGet(imdb);
-				var status = (checkCP.status == "done") ? true : false;
+				var status = checkCP.status == "done";
 				if (checkCP.status !== "false" && checkCP !== false) {
 					try {
 						Movies.insert({
@@ -57,7 +57,7 @@ Meteor.methods({
 					}
 				}
 			} catch (error) {
-				logger.error("Error checking Couch Potato:", error.message)
+				logger.error("Error checking Couch Potato:", error.message);
 				return false;
 			}
 		}
@@ -90,7 +90,7 @@ Meteor.methods({
 				try {
 					var add = CouchPotato.movieAdd(imdb);
 				} catch (error) {
-					logger.error("Error adding to Couch Potato:", error.message)
+					logger.error("Error adding to Couch Potato:", error.message);
 					return false;
 				}
 
