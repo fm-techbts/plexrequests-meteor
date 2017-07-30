@@ -24,27 +24,27 @@ Template.search.onCreated(function () {
 });
 
 Template.search.helpers({
-	"searchOptions": function () {
+  'searchOptions': function () {
     return Session.get("searchOptions");
-	},
-  "firstSearchOption": function () {
+  },
+  'firstSearchOption': function () {
     return Session.get("searchOptions")[0];
   },
-  "searchDisabled": function () {
+  'searchDisabled': function () {
     if (Session.get("searchDisabled") == true) {
       return "disabled";
     }
   },
-	"error": function () {
-		return Template.instance().error.get();
-	},
-	"searching": function () {
-		return Template.instance().searching.get();
-	},
-	"searchType": function () {
-		return Template.instance().searchType.get();
-	},
-	'results': function () {
+  'error': function () {
+    return Template.instance().error.get();
+  },
+  'searching': function () {
+    return Template.instance().searching.get();
+  },
+  'searchType': function () {
+    return Template.instance().searchType.get();
+  },
+  'results': function () {
     return Template.instance().results.get();
   },
   'activeSearch' : function () {
@@ -58,6 +58,13 @@ Template.search.events({
     template.searchType.set(type);
     template.results.set([]);
     $('#search-input').trigger('keyup');
+
+    var btnGroup = $('#search-form .input-group-addon > .btn-group');
+    if (btnGroup.css('visibility') == 'hidden') {
+      btnGroup.css('visibility', 'visible');
+    } else {
+      btnGroup.css('visibility', 'hidden');
+    }
   },
   'keyup  #search-input': _.throttle(function (event, template) {
     var searchterm = $(event.target).val().trim();
@@ -130,7 +137,51 @@ Template.search.events({
       })
     }
   },
+  'click #now_playing': function(event, template) {
+    var searchterm = 'now_playing';
+    var searchType = template.searchType.get();
+
+    if (searchterm.length > 1) {
+      template.searching.set(true);
+      template.error.set(false);
+      Meteor.call("searchContent", searchterm, searchType, function (error, result) {
+        if (error) {
+          console.error(error);
+          template.searching.set(false);
+          template.error.set(true);
+        } else if (result.length) {
+          template.searching.set(false);
+          template.results.set(result);
+        } else {
+          template.searching.set(false);
+          template.error.set(true);
+        }
+      });
+    }
+  },
+  'click #upcoming': function(event, template) {    
+    var searchterm = 'upcoming';
+    var searchType = template.searchType.get();
+
+    if (searchterm.length > 1) {
+      template.searching.set(true);
+      template.error.set(false);
+      Meteor.call("searchContent", searchterm, searchType, function (error, result) {
+        if (error) {
+          console.error(error);
+          template.searching.set(false);
+          template.error.set(true);
+        } else if (result.length) {
+          template.searching.set(false);
+          template.results.set(result);
+        } else {
+          template.searching.set(false);
+          template.error.set(true);
+        }
+      });
+    }
+  },
   'click .go-to-top': function () {
-		$('body').animate({ scrollTop: 0 }, "slow")
-	}
+    $('body').animate({ scrollTop: 0 }, "slow")
+  }
 });
